@@ -20,6 +20,26 @@ public class Board {
         this.openSpaces = openSpaces;
     }
 
+    public Board(File input) throws FileNotFoundException {
+        Scanner boardParser = new Scanner(input);
+        this.board = new char[9][9];
+        this.openSpaces = new ArrayList<List<Integer>>();
+        int row = 0;
+        while(row != 9) {
+            String line = boardParser.nextLine();
+            for(int i = 0; i < line.length(); i++) {
+                board[row][i] = line.charAt(i);
+                if(line.charAt(i) == '.') {
+                    List<Integer> temp = new ArrayList<Integer>();
+                    temp.add(row);
+                    temp.add(i);
+                    openSpaces.add(temp);
+                }
+            }
+            row++;
+        }
+    }
+
     public boolean solve(int index) {
         String potentialChoices = "123456789";
         if(board[NUM_OF_ROWS - 1][NUM_OF_COLS - 1] != EMPTY_CELL) {
@@ -52,7 +72,7 @@ public class Board {
         String stringBoard = "";
         for(int row = 0; row < NUM_OF_ROWS; row++) {
             for(int col = 0; col < NUM_OF_COLS; col++) {
-                stringBoard += board[row][col] + " | ";
+                stringBoard += "| " + board[row][col] + " | ";
             }
             stringBoard += "\n";
         }
@@ -96,28 +116,6 @@ public class Board {
     }
 
     public static void main(String[] args) throws FileNotFoundException {
-        File sudokuBoard = new File("board1.txt");
-        Scanner boardParser = new Scanner(sudokuBoard);
-        char[][] board = new char[9][9];
-        List<List<Integer>> openSpaces = new ArrayList<List<Integer>>();
-        int row = 0;
-        while(row != 9) {
-            String line = boardParser.nextLine();
-            for(int i = 0; i < line.length(); i++) {
-                board[row][i] = line.charAt(i);
-                if(line.charAt(i) == '.') {
-                    List<Integer> temp = new ArrayList<Integer>();
-                    temp.add(row);
-                    temp.add(i);
-                    openSpaces.add(temp);
-                }
-            }
-            row++;
-        }
 
-        Board test = new Board(board, openSpaces);
-        System.out.println(test.toString());
-        test.solve(0);
-        System.out.println(test.toString());
     }
 }
