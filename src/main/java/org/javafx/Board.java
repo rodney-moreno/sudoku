@@ -13,27 +13,21 @@ public class Board {
     private final int NUM_OF_COLS = 9;
     private final char EMPTY_CELL = '.';
     private final int NUM_OF_GROUPS = 27;
-    private List<List<Integer>> openSpaces;
-
-    public Board(char[][] board, List<List<Integer>> openSpaces) {
-        this.board = board;
-        this.openSpaces = openSpaces;
-    }
+    private List<int[]> openSpaces;
 
     public Board(File input) throws FileNotFoundException {
         Scanner boardParser = new Scanner(input);
         this.board = new char[9][9];
-        this.openSpaces = new ArrayList<List<Integer>>();
+        this.openSpaces = new ArrayList<int[]>();
         int row = 0;
-        while(row != 9) {
+
+        while(row < 9) {
             String line = boardParser.nextLine();
             for(int i = 0; i < line.length(); i++) {
                 board[row][i] = line.charAt(i);
                 if(line.charAt(i) == '.') {
-                    List<Integer> temp = new ArrayList<Integer>();
-                    temp.add(row);
-                    temp.add(i);
-                    openSpaces.add(temp);
+                    int[] openSpace = {row, i};
+                    openSpaces.add(openSpace);
                 }
             }
             row++;
@@ -45,10 +39,11 @@ public class Board {
         if(board[NUM_OF_ROWS - 1][NUM_OF_COLS - 1] != EMPTY_CELL) {
             return true;
         } else {
-            int row = openSpaces.get(index).get(0);
-            int col = openSpaces.get(index).get(1);
+            int row = openSpaces.get(index)[0];
+            int col = openSpaces.get(index)[1];
             for(int i = 0; i < potentialChoices.length(); i++) {
-                if(isValidSudoku(row, col, potentialChoices.charAt(i))) {
+                placeNum(row, col, potentialChoices.charAt(i));
+                if(isValidSudoku()) {
                     if(solve(index + 1)) return true;
                     removeNum(row, col);
                 } else {
@@ -60,7 +55,7 @@ public class Board {
         return false;
     }
 
-    private void placeNum(int row, int col, char element) {
+    public void placeNum(int row, int col, char element) {
         board[row][col] = element;
     }
 
@@ -72,15 +67,15 @@ public class Board {
         String stringBoard = "";
         for(int row = 0; row < NUM_OF_ROWS; row++) {
             for(int col = 0; col < NUM_OF_COLS; col++) {
-                stringBoard += "| " + board[row][col] + " | ";
+                stringBoard += "| " + board[row][col] + " ";
             }
-            stringBoard += "\n";
+            stringBoard += "|\n";
         }
         return stringBoard;
     }
 
-    private boolean isValidSudoku(int a, int b, char target) {
-        placeNum(a, b, target);
+    private boolean isValidSudoku() {
+
         HashSet<Character>[] sets = new HashSet[NUM_OF_GROUPS];
         for(int i = 0; i < sets.length; i++) {
             HashSet<Character> set = new HashSet<Character>();
@@ -116,6 +111,9 @@ public class Board {
     }
 
     public static void main(String[] args) throws FileNotFoundException {
-
+        Board puzzle = new Board(new File("board-1.txt"));
+        System.out.println(puzzle.toString());
+        puzzle.solve(0);
+        System.out.println(puzzle.toString());
     }
 }
