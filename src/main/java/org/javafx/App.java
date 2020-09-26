@@ -3,6 +3,7 @@ package org.javafx;
 import javafx.application.Application;
 import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
+import javafx.geometry.Insets;
 import javafx.scene.Scene;
 import javafx.scene.control.TextField;
 import javafx.scene.layout.*;
@@ -19,24 +20,34 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.util.Scanner;
 import java.util.HashMap;
-import java.util.Stack;
 
 
 public class App extends Application {
 
     private File input;
-    private GridPane gp;
-    private HashMap<Integer, TextField> map;
+    private HashMap<Integer, TextField> emptyCells;
+    private HashMap<Integer, Character> nonEmptyCells;
 
     @Override
     public void start(Stage stage) throws FileNotFoundException {
         BorderPane root = new BorderPane();
+        emptyCells = new HashMap<>();
+        nonEmptyCells = new HashMap<>();
 
-        map = new HashMap<Integer, TextField>();
+        // right button
+        VBox right = new VBox();
+        right.setPrefWidth(120);
+        BorderPane.setMargin(right, new Insets(120,60, 120, 0));
+        addCheckButton(right);
+        addSolveButton(right);
+
+        // game board
         input = new File("board-1.txt");
         GridPane gp = initializeBoard();
         root.setCenter(gp);
-        addCheckButton(root);
+        BorderPane.setMargin(gp, new Insets(120, 60, 120, 120));
+
+        root.setRight(right);
 
 
         Scene scene = new Scene(root, 1200, 960);
@@ -53,43 +64,6 @@ public class App extends Application {
         launch(args);
     }
 
-    private Group createEmptyBoard() {
-        Group emptyBoard = new Group();
-
-
-
-        // create blank square
-        Rectangle rect = new Rectangle(720,720);
-        rect.setFill(Color.WHITE);
-
-        emptyBoard.getChildren().add(rect);
-
-
-        // add the vertical lines
-        for(int i = 1; i < 9; i++) {
-            int x = i * 80;
-            int y1 = 0;
-            int y2 = 720;
-
-            Line line = new Line(x, y1, x, y2);
-            line.setFill(Color.BLACK);
-            emptyBoard.getChildren().add(line);
-        }
-
-        // add the horizontal lines
-        for(int i = 1; i < 9; i++) {
-            int x1 = 0;
-            int y = i * 80;
-            int x2 = 720;
-
-            Line line = new Line(x1,y,x2,y);
-            line.setFill(Color.BLACK);
-            emptyBoard.getChildren().add(line);
-        }
-
-        return emptyBoard;
-    }
-
     private void addNewBoardButton(BorderPane root, Stage stage) throws FileNotFoundException {
         Button bt = new Button("New Board");
         bt.setOnAction(new EventHandler<ActionEvent>() {
@@ -103,18 +77,35 @@ public class App extends Application {
         root.setRight(bt);
     }
 
-    private void addCheckButton(BorderPane root) {
+    private void addCheckButton(VBox right) {
         Button bt = new Button("Check");
+        bt.setMinWidth(180);
         bt.setOnAction(new EventHandler<ActionEvent>() {
             @Override
             public void handle(ActionEvent actionEvent) {
-                for(int key : map.keySet()) {
-                    System.out.println("Index: " + key + " Value: " + map.get(key).getText());
+                char[][] board = new char[9][9];
+                for(int i = 0; i < 9; i++) {
+                    for(int j = 0; j < 9; j++) {
+                        if(emptyCells.containsKey(i * 9 + j)) {
+                            board[i][j] = emptyCells.get(i * 9 + j).getText().charAt(0);
+                        } else {
+                            board[i][j] = nonEmptyCells.get(i * 9 + j);
+                        }
+                    }
                 }
+
+                Board puzzle = new Board(board);
+                System.out.println(puzzle.isValidSudoku());
             }
         });
 
-        root.setRight(bt);
+        right.getChildren().add(bt);
+    }
+
+    private void addSolveButton(VBox right) {
+        Button bt = new Button("Solve");
+        bt.setMinWidth(180);
+        right.getChildren().add(bt);
     }
 
     private Rectangle createRectangle() {
@@ -125,8 +116,7 @@ public class App extends Application {
     }
 
     private TextField createTextField() {
-        TextField cur = new TextField();
-        return cur;
+        return new TextField();
     }
 
     private Text createText(String value) {
@@ -144,13 +134,15 @@ public class App extends Application {
             String line = fileScanner.nextLine();
             for(int i = 0; i < line.length(); i++) {
                 StackPane stack = new StackPane();
+                int index = row * 9 + i;
                 if(line.charAt(i) == '.') {
                     TextField textfield = createTextField();
-                    int index = row * 9 + i;
-                    map.put(index, textfield);
+                    emptyCells.put(index, textfield);
                     stack.getChildren().addAll(createRectangle(), textfield);
                 } else {
+                    Text text = createText("" + line.charAt(i));
                     stack.getChildren().addAll(createRectangle(), createText("" + line.charAt(i)));
+                    nonEmptyCells.put(index, line.charAt(i));
                 }
                 gridPane.add(stack, i, row);
             }

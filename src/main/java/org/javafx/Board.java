@@ -2,6 +2,9 @@ package org.javafx;
 
 import java.io.File;
 import java.io.FileNotFoundException;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.lang.reflect.Array;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Scanner;
@@ -14,6 +17,7 @@ public class Board {
     private final char EMPTY_CELL = '.';
     private final int NUM_OF_GROUPS = 27;
     private List<int[]> openSpaces;
+    private int numOfSol = 0;
 
     public Board(File input) throws FileNotFoundException {
         Scanner boardParser = new Scanner(input);
@@ -34,9 +38,13 @@ public class Board {
         }
     }
 
+    public Board(char[][] board) {
+        this.board = board;
+    }
+
     public boolean solve(int index) {
         String potentialChoices = "123456789";
-        if(board[NUM_OF_ROWS - 1][NUM_OF_COLS - 1] != EMPTY_CELL) {
+        if(!containsEmpty()) {
             return true;
         } else {
             int row = openSpaces.get(index)[0];
@@ -55,7 +63,7 @@ public class Board {
         return false;
     }
 
-    public void placeNum(int row, int col, char element) {
+    private void placeNum(int row, int col, char element) {
         board[row][col] = element;
     }
 
@@ -74,7 +82,7 @@ public class Board {
         return stringBoard;
     }
 
-    private boolean isValidSudoku() {
+    public boolean isValidSudoku() {
 
         HashSet<Character>[] sets = new HashSet[NUM_OF_GROUPS];
         for(int i = 0; i < sets.length; i++) {
@@ -110,10 +118,120 @@ public class Board {
         return true;
     }
 
-    public static void main(String[] args) throws FileNotFoundException {
-        Board puzzle = new Board(new File("board-1.txt"));
+    private boolean containsEmpty() {
+        for(int i = 0; i < NUM_OF_ROWS; i++) {
+            for(int j = 0; j < NUM_OF_COLS; j++) {
+                if(board[i][j] == EMPTY_CELL) {
+                    return true;
+                }
+            }
+        }
+
+        return false;
+    }
+
+    public void solveAll(int index) {
+        String potentialChoices = "123456789";
+        if(!containsEmpty()) {
+            numOfSol++;
+            System.out.println(numOfSol);
+        } else {
+            int row = openSpaces.get(index)[0];
+            int col = openSpaces.get(index)[1];
+            for(int i = 0; i < potentialChoices.length(); i++) {
+                placeNum(row, col, potentialChoices.charAt(i));
+                if(isValidSudoku()) {
+                    solveAll(index + 1);
+                }
+                removeNum(row, col);
+            }
+        }
+
+    }
+
+    public void printToFile(String name) throws IOException {
+        File puzzle = new File(name);
+        puzzle.createNewFile();
+        String oneLine = "";
+        try (FileWriter writer = new FileWriter(name)) {
+            for (int i = 0; i < 9; i++) {
+                String row = "";
+                for (int j = 0; j < 9; j++) {
+                    row += board[i][j];
+                }
+                oneLine += row;
+            }
+            writer.write(oneLine);
+        }
+    }
+
+
+    public void createPuzzle() {
+        board = new char[NUM_OF_ROWS][NUM_OF_COLS];
+        for(int i = 0; i < NUM_OF_ROWS; i++) {
+            for(int j = 0; j < NUM_OF_COLS; j++) {
+                board[i][j] = '.';
+            }
+        }
+
+
+
+        int numOfClues = 35;
+        List<List<Integer>> set = new ArrayList<List<Integer>>();
+        while(set.size() < numOfClues) {
+            int row = (int) (Math.random() * 9);
+            int col = (int) (Math.random() * 9);
+            List<Integer> cell = new ArrayList<>();
+            cell.add(row);
+            cell.add(col);
+            if(!set.contains(cell)) {
+                set.add(cell);
+            }
+        }
+
+        openSpaces = new ArrayList<int[]>();
+        for(int i = 0; i < 9; i++) {
+            for(int j = 0; j < 9; j++) {
+                int[] pos = {i, j};
+                if(!set.contains(pos)) {
+                    openSpaces.add(pos);
+                }
+            }
+        }
+
+        System.out.println(fillNewBoard(0, numOfClues, set));
+    }
+
+    public boolean fillNewBoard(int index, int numOfCells, List<List<Integer>> set) {
+        String potentialChoice = "123456789";
+        if(index == set.size() - 1) {
+            return true;
+        } else {
+            int row = set.get(index).get(0);
+            int col = set.get(index).get(1);
+            for(int i = 0; i < 9; i++) {
+                placeNum(row, col, potentialChoice.charAt(i));
+                int[] openPos = {row, col};
+                if(solve(0)) {
+                    if(fillNewBoard(index + 1, numOfCells + 1, set)){
+                        removeNum(row, col);
+                        return true;
+                    }
+                } else {
+                    removeNum(row, col);
+                }
+            }
+        }
+
+        return false;
+    }
+
+
+    public static void main(String[] args) throws IOException {
+        Board puzzle = new Board(new File("puzzles/board-1.txt"));
+        puzzle.createPuzzle();
         System.out.println(puzzle.toString());
-        puzzle.solve(0);
-        System.out.println(puzzle.toString());
+        puzzle.printToFile("puzzle-13.txt");
+
     }
 }
