@@ -4,11 +4,7 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileWriter;
 import java.io.IOException;
-import java.lang.reflect.Array;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Scanner;
-import java.util.ArrayList;
+import java.util.*;
 
 public class Board {
     private char[][] board;
@@ -21,15 +17,17 @@ public class Board {
 
     public Board(File input) throws FileNotFoundException {
         Scanner boardParser = new Scanner(input);
+        String line = boardParser.nextLine();
+
         this.board = new char[9][9];
         this.openSpaces = new ArrayList<int[]>();
-        int row = 0;
 
+        int row = 0;
         while(row < 9) {
-            String line = boardParser.nextLine();
-            for(int i = 0; i < line.length(); i++) {
-                board[row][i] = line.charAt(i);
-                if(line.charAt(i) == '.') {
+            for(int i = 0; i < 9; i++) {
+                int index = row * 9 + i;
+                board[row][i] = line.charAt(index);
+                if(line.charAt(index) == '.') {
                     int[] openSpace = {row, i};
                     openSpaces.add(openSpace);
                 }
@@ -42,9 +40,13 @@ public class Board {
         this.board = board;
     }
 
+    public Board() {
+        createPuzzle();
+    }
+
     public boolean solve(int index) {
         String potentialChoices = "123456789";
-        if(!containsEmpty()) {
+        if(noEmpty()) {
             return true;
         } else {
             int row = openSpaces.get(index)[0];
@@ -72,14 +74,14 @@ public class Board {
     }
 
     public String toString() {
-        String stringBoard = "";
+        StringBuilder stringBoard = new StringBuilder();
         for(int row = 0; row < NUM_OF_ROWS; row++) {
             for(int col = 0; col < NUM_OF_COLS; col++) {
-                stringBoard += "| " + board[row][col] + " ";
+                stringBoard.append("| ").append(board[row][col]).append(" ");
             }
-            stringBoard += "|\n";
+            stringBoard.append("|\n");
         }
-        return stringBoard;
+        return stringBoard.toString();
     }
 
     public boolean isValidSudoku() {
@@ -118,30 +120,30 @@ public class Board {
         return true;
     }
 
-    private boolean containsEmpty() {
+    private boolean noEmpty() {
         for(int i = 0; i < NUM_OF_ROWS; i++) {
             for(int j = 0; j < NUM_OF_COLS; j++) {
                 if(board[i][j] == EMPTY_CELL) {
-                    return true;
+                    return false;
                 }
             }
         }
 
-        return false;
+        return true;
     }
 
-    public void solveAll(int index) {
+    public void enumerateSol(int index) {
         String potentialChoices = "123456789";
-        if(!containsEmpty()) {
+        if(noEmpty()) {
             numOfSol++;
-            System.out.println(numOfSol);
         } else {
             int row = openSpaces.get(index)[0];
             int col = openSpaces.get(index)[1];
             for(int i = 0; i < potentialChoices.length(); i++) {
                 placeNum(row, col, potentialChoices.charAt(i));
                 if(isValidSudoku()) {
-                    solveAll(index + 1);
+                    enumerateSol(index + 1);
+                    removeNum(row, col);
                 }
                 removeNum(row, col);
             }
@@ -165,8 +167,7 @@ public class Board {
         }
     }
 
-
-    public void createPuzzle() {
+    private void createPuzzle() {
         board = new char[NUM_OF_ROWS][NUM_OF_COLS];
         for(int i = 0; i < NUM_OF_ROWS; i++) {
             for(int j = 0; j < NUM_OF_COLS; j++) {
@@ -174,9 +175,7 @@ public class Board {
             }
         }
 
-
-
-        int numOfClues = 35;
+        int numOfClues = 46;
         List<List<Integer>> set = new ArrayList<List<Integer>>();
         while(set.size() < numOfClues) {
             int row = (int) (Math.random() * 9);
@@ -199,10 +198,10 @@ public class Board {
             }
         }
 
-        System.out.println(fillNewBoard(0, numOfClues, set));
+        fillNewBoard(0, numOfClues, set);
     }
 
-    public boolean fillNewBoard(int index, int numOfCells, List<List<Integer>> set) {
+    private boolean fillNewBoard(int index, int numOfCells, List<List<Integer>> set) {
         String potentialChoice = "123456789";
         if(index == set.size() - 1) {
             return true;
@@ -226,12 +225,7 @@ public class Board {
         return false;
     }
 
-
     public static void main(String[] args) throws IOException {
-        Board puzzle = new Board(new File("puzzles/board-1.txt"));
-        puzzle.createPuzzle();
-        System.out.println(puzzle.toString());
-        puzzle.printToFile("puzzle-13.txt");
 
     }
 }

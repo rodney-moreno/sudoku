@@ -42,7 +42,7 @@ public class App extends Application {
         addSolveButton(right);
 
         // game board
-        input = new File("board-1.txt");
+        input = new File("puzzle-6.txt");
         GridPane gp = initializeBoard();
         root.setCenter(gp);
         BorderPane.setMargin(gp, new Insets(120, 60, 120, 120));
